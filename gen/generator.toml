@@ -1,0 +1,16 @@
+[general]
+library_name = "libwebsockets"
+use_julia_native_enum_type = true
+use_deterministic_symbol = true
+auto_mutability = true
+print_enum_as_integer = true
+printer_blacklist = ["OSSL_provider_init"]
+prologue_file_path = "./prologue.jl"
+# epilogue_file_path = "./epilogue.jl"
+
+[codegen]
+use_ccall_macro = true
+wrap_variadic_function = true
+
+[codegen.macro]
+macro_mode = "basic"
