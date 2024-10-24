@@ -1,7 +1,7 @@
 using Pkg
 cd(@__DIR__)
 Pkg.activate("gen")
-Pkg.update()
+# Pkg.update()
 
 include("gen/generate.jl")
 
