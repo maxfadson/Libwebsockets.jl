@@ -2357,10 +2357,6 @@ const lws_authentication_mode = UInt32
 const LWSAUTHM_DEFAULT = 0 % UInt32
 const LWSAUTHM_BASIC_AUTH_CALLBACK = 268435456 % UInt32
 
-struct lws_http_mount
-    data::NTuple{88, UInt8}
-end
-
 function Base.getproperty(x::Ptr{lws_http_mount}, f::Symbol)
     f === :mount_next && return Ptr{Ptr{lws_http_mount}}(x + 0)
     f === :mountpoint && return Ptr{Ptr{Cchar}}(x + 8)
