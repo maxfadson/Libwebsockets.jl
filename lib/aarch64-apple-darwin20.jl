@@ -149,6 +149,10 @@ struct lws_log_cx
     data::NTuple{56, UInt8}
 end
 
+function lws_log_cx(; data = ntuple(x -> UInt8(0), 56))
+    lws_log_cx(data)
+end
+
 function Base.getproperty(x::Ptr{lws_log_cx}, f::Symbol)
     f === :u && return Ptr{__JL_Ctag_66}(x + 0)
     f === :refcount_cb && return Ptr{lws_log_use_cx_t}(x + 8)
@@ -1069,6 +1073,10 @@ struct lws_state_notify_link
     name::Ptr{Cchar}
 end
 
+function lws_state_notify_link(; list = lws_dll2_t(), notify_cb = C_NULL, name = C_NULL)
+    lws_state_notify_link(list, notify_cb, name)
+end
+
 const lws_state_notify_link_t = lws_state_notify_link
 
 struct lws_state_manager
@@ -1110,6 +1118,13 @@ struct lws_retry_bo
     secs_since_valid_ping::UInt16
     secs_since_valid_hangup::UInt16
     jitter_percent::UInt8
+end
+
+function lws_retry_bo(; retry_ms_table = C_NULL, retry_ms_table_count = 0, 
+    conceal_count = 0, secs_since_valid_ping = 0, 
+    secs_since_valid_hangup = 0, jitter_percent = 0)
+lws_retry_bo(retry_ms_table, retry_ms_table_count, conceal_count, 
+secs_since_valid_ping, secs_since_valid_hangup, jitter_percent)
 end
 
 const lws_retry_bo_t = lws_retry_bo
@@ -1617,6 +1632,13 @@ struct lws_system_ops
     wake_latency_us::UInt32
 end
 
+function lws_system_ops(; reboot = C_NULL, set_clock = C_NULL, attach = C_NULL, 
+    captive_portal_detect_request = C_NULL, metric_report = C_NULL, 
+    jit_trust_query = C_NULL, wake_latency_us = 0)
+lws_system_ops(reboot, set_clock, attach, captive_portal_detect_request, 
+metric_report, jit_trust_query, wake_latency_us)
+end
+
 const lws_system_ops_t = lws_system_ops
 
 function lws_system_get_state_manager(context)
@@ -1879,7 +1901,7 @@ const LWS_CALLBACK_MQTT_SHADOW_TIMEOUT = 212 % UInt32
 const LWS_CALLBACK_USER = 1000 % UInt32
 
 # typedef int lws_callback_function ( struct lws * wsi , enum lws_callback_reasons reason , void * user , void * in , size_t len )
-const lws_callback_function = Cvoid
+const lws_callback_function = Cint
 
 function lws_send_pipe_choked(wsi)
     @ccall libwebsockets.lws_send_pipe_choked(wsi::Ptr{lws})::Cint
@@ -1943,6 +1965,10 @@ struct lws_extension
     client_offer::Ptr{Cchar}
 end
 
+function lws_extension(; name = C_NULL, callback = C_NULL, client_offer = C_NULL)
+    lws_extension(name, callback, client_offer)
+end
+
 function lws_set_extension_option(wsi, ext_name, opt_name, opt_val)
     @ccall libwebsockets.lws_set_extension_option(wsi::Ptr{lws}, ext_name::Ptr{Cchar}, opt_name::Ptr{Cchar}, opt_val::Ptr{Cchar})::Cint
 end
@@ -1955,7 +1981,7 @@ function lws_extension_callback_pm_deflate(context, ext, wsi, reason, user, in, 
     @ccall libwebsockets.lws_extension_callback_pm_deflate(context::Ptr{lws_context}, ext::Ptr{lws_extension}, wsi::Ptr{lws}, reason::lws_extension_callback_reasons, user::Ptr{Cvoid}, in::Ptr{Cvoid}, len::Csize_t)::Cint
 end
 
-struct lws_protocols
+mutable struct lws_protocols
     name::Ptr{Cchar}
     callback::Ptr{lws_callback_function}
     per_session_data_size::Csize_t
@@ -1963,6 +1989,27 @@ struct lws_protocols
     id::Cuint
     user::Ptr{Cvoid}
     tx_packet_size::Csize_t
+end
+
+function lws_protocols(; name::String = "", 
+                        callback = C_NULL, 
+                        per_session_data_size::Csize_t = 1024,   # Например, 1 КБ на соединение
+                        rx_buffer_size::Csize_t = 4096,          # Например, 4 КБ для приема данных
+                        id::Cuint = 0, 
+                        user::Ptr{Cvoid} = C_NULL, 
+                        tx_packet_size::Csize_t = 4096)          # Например, 4 КБ для отправки данных
+    
+    name_ptr = pointer(name)
+    
+    return lws_protocols(
+        Ptr{Cchar}(name_ptr),
+        callback,
+        per_session_data_size,
+        rx_buffer_size,
+        id,
+        user,
+        tx_packet_size
+    )
 end
 
 function lws_vhost_name_to_protocol(vh, name)
@@ -2004,6 +2051,10 @@ struct lws_protocol_vhost_options
     value::Ptr{Cchar}
 end
 
+function lws_protocol_vhost_options(; next = C_NULL, options = C_NULL, name = C_NULL, value = C_NULL)
+    lws_protocol_vhost_options(next, options, name, value)
+end
+
 function lws_pvo_search(pvo, name)
     @ccall libwebsockets.lws_pvo_search(pvo::Ptr{lws_protocol_vhost_options}, name::Ptr{Cchar})::Ptr{lws_protocol_vhost_options}
 end
@@ -2021,6 +2072,10 @@ struct lws_plugin_header
     _class::Ptr{Cchar}
     lws_build_hash::Ptr{Cchar}
     api_magic::Cuint
+end
+
+function lws_plugin_header(; name = C_NULL, _class = C_NULL, lws_build_hash = C_NULL, api_magic = 0)
+    lws_plugin_header(name, _class, lws_build_hash, api_magic)
 end
 
 const lws_plugin_header_t = lws_plugin_header
@@ -2077,7 +2132,7 @@ function Base.setproperty!(x::Ptr{lws_plugin}, f::Symbol, v)
     unsafe_store!(getproperty(x, f), v)
 end
 
-struct lws_event_loop_ops
+mutable struct lws_event_loop_ops
     name::Ptr{Cchar}
     init_context::Ptr{Cvoid}
     destroy_context1::Ptr{Cvoid}
@@ -2100,9 +2155,28 @@ struct lws_event_loop_ops
     evlib_size_wsi::UInt16
 end
 
+function lws_event_loop_ops(; name = C_NULL, init_context = C_NULL, destroy_context1 = C_NULL, 
+    destroy_context2 = C_NULL, init_vhost_listen_wsi = C_NULL, 
+    init_pt = C_NULL, wsi_logical_close = C_NULL, 
+    check_client_connect_ok = C_NULL, close_handle_manually = C_NULL, 
+    sock_accept = C_NULL, io = C_NULL, run_pt = C_NULL, destroy_pt = C_NULL, 
+    destroy_wsi = C_NULL, foreign_thread = C_NULL, flags = UInt8(0), 
+    evlib_size_ctx = UInt16(0), evlib_size_pt = UInt16(0), 
+    evlib_size_vh = UInt16(0), evlib_size_wsi = UInt16(0))
+
+    lws_event_loop_ops(name, init_context, destroy_context1, destroy_context2, init_vhost_listen_wsi, 
+    init_pt, wsi_logical_close, check_client_connect_ok, close_handle_manually, 
+    sock_accept, io, run_pt, destroy_pt, destroy_wsi, foreign_thread, 
+    flags, evlib_size_ctx, evlib_size_pt, evlib_size_vh, evlib_size_wsi)
+end
+
 struct lws_plugin_evlib
     hdr::lws_plugin_header_t
     ops::Ptr{lws_event_loop_ops}
+end
+
+function lws_plugin_evlib(; hdr = lws_plugin_header(), ops = C_NULL)
+    lws_plugin_evlib(hdr, ops)
 end
 
 const lws_plugin_evlib_t = lws_plugin_evlib
@@ -2130,13 +2204,67 @@ struct lws_token_limits
     token_limit::NTuple{96, Cushort}
 end
 
-struct lws_http_mount
-    data::NTuple{88, UInt8}
+function lws_token_limits(; token_limit = ntuple(x -> Cushort(0), 96))
+    lws_token_limits(token_limit)
+end
+
+mutable struct lws_http_mount
+    mount_next::Ptr{lws_http_mount}
+    mountpoint::Ptr{Cchar}
+    origin::Ptr{Cchar}
+    def::Ptr{Cchar}
+    protocol::Ptr{Cchar}
+    cgienv::Ptr{lws_protocol_vhost_options}
+    extra_mimetypes::Ptr{lws_protocol_vhost_options}
+    interpret::Ptr{lws_protocol_vhost_options}
+    cgi_timeout::Cint
+    cache_max_age::Cint
+    auth_mask::Cuint
+    cache_reusable::Bool
+    cache_revalidate::Bool
+    cache_intermediaries::Bool
+    cache_no::Bool
+    origin_protocol::Cuchar
+    mountpoint_len::Cuchar
+    basic_auth_login_file::Ptr{Cchar}
+end
+
+function lws_http_mount(; mount_next = C_NULL, mountpoint = "", origin = "", def = "",
+                        protocol = "", cgienv = C_NULL, extra_mimetypes = C_NULL,
+                        interpret = C_NULL, cgi_timeout = 0, cache_max_age = 0,
+                        auth_mask = 0, cache_reusable = false, cache_revalidate = false,
+                        cache_intermediaries = false, cache_no = false,
+                        origin_protocol = LWSMPRO_FILE, mountpoint_len = 0,
+                        basic_auth_login_file = "")
+    return lws_http_mount(
+        mount_next,
+        pointer(mountpoint),
+        pointer(origin),
+        pointer(def),
+        pointer(protocol),
+        cgienv,
+        extra_mimetypes,
+        interpret,
+        cgi_timeout,
+        cache_max_age,
+        Cuint(auth_mask),
+        cache_reusable,
+        cache_revalidate,
+        cache_intermediaries,
+        cache_no,
+        Cuchar(origin_protocol),
+        Cuchar(mountpoint_len),
+        pointer(basic_auth_login_file)
+    )
 end
 
 struct lws_fops_index
     sig::Ptr{Cchar}
     len::UInt8
+end
+
+function lws_fops_index(; sig = C_NULL, len = UInt8(0))
+    lws_fops_index(sig, len)
 end
 
 struct lws_plat_file_ops
@@ -2149,7 +2277,12 @@ struct lws_plat_file_ops
     next::Ptr{lws_plat_file_ops}
 end
 
-struct lws_context_creation_info
+function lws_plat_file_ops(; open = C_NULL, close = C_NULL, seek_cur = C_NULL, read = C_NULL, 
+    write = C_NULL, fi = ntuple(x -> lws_fops_index(), 3), next = C_NULL)
+    lws_plat_file_ops(open, close, seek_cur, read, write, fi, next)
+end
+
+mutable struct lws_context_creation_info
     iface::Ptr{Cchar}
     protocols::Ptr{lws_protocols}
     extensions::Ptr{lws_extension}
@@ -2167,7 +2300,7 @@ struct lws_context_creation_info
     max_http_header_data2::Cuint
     max_http_header_pool2::Cuint
     keepalive_timeout::Cint
-    http2_settings::NTuple{7, UInt32}
+    http2_settings::NTuple{7,UInt32}
     max_http_header_data::Cushort
     max_http_header_pool::Cushort
     ssl_private_key_password::Ptr{Cchar}
@@ -2250,7 +2383,220 @@ struct lws_context_creation_info
     http_nsc_heap_max_footprint::Csize_t
     http_nsc_heap_max_items::Csize_t
     http_nsc_heap_max_payload::Csize_t
-    _unused::NTuple{2, Ptr{Cvoid}}
+end
+
+function lws_context_creation_info(;
+    iface = C_NULL,
+    protocols = C_NULL,
+    extensions = C_NULL,
+    token_limits = C_NULL,
+    http_proxy_address = C_NULL,
+    headers = C_NULL,
+    reject_service_keywords = C_NULL,
+    pvo = C_NULL,
+    log_filepath = C_NULL,
+    mounts = C_NULL,
+    server_string = C_NULL,
+    error_document_404 = C_NULL,
+    port = 0,
+    http_proxy_port = 0,
+    max_http_header_data2 = 0,
+    max_http_header_pool2 = 0,
+    keepalive_timeout = 0,
+    http2_settings = (
+        zero(UInt32),
+        zero(UInt32),
+        zero(UInt32),
+        zero(UInt32),
+        zero(UInt32),
+        zero(UInt32),
+        zero(UInt32),
+    ),
+    max_http_header_data = 0,
+    max_http_header_pool = 0,
+    ssl_private_key_password = C_NULL,
+    ssl_cert_filepath = C_NULL,
+    ssl_private_key_filepath = C_NULL,
+    ssl_ca_filepath = C_NULL,
+    ssl_cipher_list = C_NULL,
+    ecdh_curve = C_NULL,
+    tls1_3_plus_cipher_list = C_NULL,
+    server_ssl_cert_mem = C_NULL,
+    server_ssl_private_key_mem = C_NULL,
+    server_ssl_ca_mem = C_NULL,
+    ssl_options_set = 0,
+    ssl_options_clear = 0,
+    simultaneous_ssl_restriction = 0,
+    simultaneous_ssl_handshake_restriction = 0,
+    ssl_info_event_mask = 0,
+    server_ssl_cert_mem_len = 0,
+    server_ssl_private_key_mem_len = 0,
+    server_ssl_ca_mem_len = 0,
+    alpn = C_NULL,
+    client_ssl_private_key_password = C_NULL,
+    client_ssl_cert_filepath = C_NULL,
+    client_ssl_cert_mem = C_NULL,
+    client_ssl_cert_mem_len = 0,
+    client_ssl_private_key_filepath = C_NULL,
+    client_ssl_key_mem = C_NULL,
+    client_ssl_ca_filepath = C_NULL,
+    client_ssl_ca_mem = C_NULL,
+    client_ssl_cipher_list = C_NULL,
+    client_tls_1_3_plus_cipher_list = C_NULL,
+    ssl_client_options_set = 0,
+    ssl_client_options_clear = 0,
+    client_ssl_ca_mem_len = 0,
+    client_ssl_key_mem_len = 0,
+    provided_client_ssl_ctx = C_NULL,
+    ka_time = 0,
+    ka_probes = 0,
+    ka_interval = 0,
+    timeout_secs = 0,
+    connect_timeout_secs = 0,
+    bind_iface = 0,
+    timeout_secs_ah_idle = 0,
+    tls_session_timeout = zero(UInt32),
+    tls_session_cache_max = zero(UInt32),
+    gid = 0,
+    uid = 0,
+    options = zero(UInt64),
+    user = C_NULL,
+    count_threads = 1,
+    fd_limit_per_thread = 0,
+    vhost_name = C_NULL,
+    external_baggage_free_on_destroy = C_NULL,
+    pt_serv_buf_size = 4096,
+    fops = C_NULL,
+    foreign_loops = C_NULL,
+    signal_cb = C_NULL,
+    pcontext = C_NULL,
+    finalize = C_NULL,
+    finalize_arg = C_NULL,
+    listen_accept_role = C_NULL,
+    listen_accept_protocol = C_NULL,
+    pprotocols = C_NULL,
+    username = C_NULL,
+    groupname = C_NULL,
+    unix_socket_perms = C_NULL,
+    system_ops = C_NULL,
+    retry_and_idle_policy = C_NULL,
+    register_notifier_list = C_NULL,
+    rlimit_nofile = 0,
+    early_smd_cb = C_NULL,
+    early_smd_opaque = C_NULL,
+    early_smd_class_filter = zero(UInt32),
+    smd_ttl_us = 2000000,
+    smd_queue_depth = 40,
+    fo_listen_queue = 0,
+    event_lib_custom = C_NULL,
+    log_cx = C_NULL,
+    http_nsc_filepath = C_NULL,
+    http_nsc_heap_max_footprint = 0,
+    http_nsc_heap_max_items = 0,
+    http_nsc_heap_max_payload = 0,
+)
+    return lws_context_creation_info(
+        iface,
+        protocols,
+        extensions,
+        token_limits,
+        http_proxy_address,
+        headers,
+        reject_service_keywords,
+        pvo,
+        log_filepath,
+        mounts,
+        server_string,
+        error_document_404,
+        port,
+        http_proxy_port,
+        max_http_header_data2,
+        max_http_header_pool2,
+        keepalive_timeout,
+        http2_settings,
+        max_http_header_data,
+        max_http_header_pool,
+        ssl_private_key_password,
+        ssl_cert_filepath,
+        ssl_private_key_filepath,
+        ssl_ca_filepath,
+        ssl_cipher_list,
+        ecdh_curve,
+        tls1_3_plus_cipher_list,
+        server_ssl_cert_mem,
+        server_ssl_private_key_mem,
+        server_ssl_ca_mem,
+        ssl_options_set,
+        ssl_options_clear,
+        simultaneous_ssl_restriction,
+        simultaneous_ssl_handshake_restriction,
+        ssl_info_event_mask,
+        server_ssl_cert_mem_len,
+        server_ssl_private_key_mem_len,
+        server_ssl_ca_mem_len,
+        alpn,
+        client_ssl_private_key_password,
+        client_ssl_cert_filepath,
+        client_ssl_cert_mem,
+        client_ssl_cert_mem_len,
+        client_ssl_private_key_filepath,
+        client_ssl_key_mem,
+        client_ssl_ca_filepath,
+        client_ssl_ca_mem,
+        client_ssl_cipher_list,
+        client_tls_1_3_plus_cipher_list,
+        ssl_client_options_set,
+        ssl_client_options_clear,
+        client_ssl_ca_mem_len,
+        client_ssl_key_mem_len,
+        provided_client_ssl_ctx,
+        ka_time,
+        ka_probes,
+        ka_interval,
+        timeout_secs,
+        connect_timeout_secs,
+        bind_iface,
+        timeout_secs_ah_idle,
+        tls_session_timeout,
+        tls_session_cache_max,
+        gid,
+        uid,
+        options,
+        user,
+        count_threads,
+        fd_limit_per_thread,
+        vhost_name,
+        external_baggage_free_on_destroy,
+        pt_serv_buf_size,
+        fops,
+        foreign_loops,
+        signal_cb,
+        pcontext,
+        finalize,
+        finalize_arg,
+        listen_accept_role,
+        listen_accept_protocol,
+        pprotocols,
+        username,
+        groupname,
+        unix_socket_perms,
+        system_ops,
+        retry_and_idle_policy,
+        register_notifier_list,
+        rlimit_nofile,
+        early_smd_cb,
+        early_smd_opaque,
+        early_smd_class_filter,
+        smd_ttl_us,
+        smd_queue_depth,
+        fo_listen_queue,
+        event_lib_custom,
+        log_cx,
+        http_nsc_filepath,
+        http_nsc_heap_max_footprint,
+        http_nsc_heap_max_items,
+        http_nsc_heap_max_payload
+    )
 end
 
 function lws_create_context(info)
@@ -2356,70 +2702,6 @@ const LWSMPRO_CALLBACK = 6 % UInt32
 const lws_authentication_mode = UInt32
 const LWSAUTHM_DEFAULT = 0 % UInt32
 const LWSAUTHM_BASIC_AUTH_CALLBACK = 268435456 % UInt32
-
-function Base.getproperty(x::Ptr{lws_http_mount}, f::Symbol)
-    f === :mount_next && return Ptr{Ptr{lws_http_mount}}(x + 0)
-    f === :mountpoint && return Ptr{Ptr{Cchar}}(x + 8)
-    f === :origin && return Ptr{Ptr{Cchar}}(x + 16)
-    f === :def && return Ptr{Ptr{Cchar}}(x + 24)
-    f === :protocol && return Ptr{Ptr{Cchar}}(x + 32)
-    f === :cgienv && return Ptr{Ptr{lws_protocol_vhost_options}}(x + 40)
-    f === :extra_mimetypes && return Ptr{Ptr{lws_protocol_vhost_options}}(x + 48)
-    f === :interpret && return Ptr{Ptr{lws_protocol_vhost_options}}(x + 56)
-    f === :cgi_timeout && return Ptr{Cint}(x + 64)
-    f === :cache_max_age && return Ptr{Cint}(x + 68)
-    f === :auth_mask && return Ptr{Cuint}(x + 72)
-    f === :cache_reusable && return (Ptr{Cuint}(x + 76), 0, 1)
-    f === :cache_revalidate && return (Ptr{Cuint}(x + 76), 1, 1)
-    f === :cache_intermediaries && return (Ptr{Cuint}(x + 76), 2, 1)
-    f === :origin_protocol && return Ptr{Cuchar}(x + 77)
-    f === :mountpoint_len && return Ptr{Cuchar}(x + 78)
-    f === :basic_auth_login_file && return Ptr{Ptr{Cchar}}(x + 80)
-    return getfield(x, f)
-end
-
-function Base.getproperty(x::lws_http_mount, f::Symbol)
-    r = Ref{lws_http_mount}(x)
-    ptr = Base.unsafe_convert(Ptr{lws_http_mount}, r)
-    fptr = getproperty(ptr, f)
-    begin
-        if fptr isa Ptr
-            return GC.@preserve(r, unsafe_load(fptr))
-        else
-            (baseptr, offset, width) = fptr
-            ty = eltype(baseptr)
-            baseptr32 = convert(Ptr{UInt32}, baseptr)
-            u64 = GC.@preserve(r, unsafe_load(baseptr32))
-            if offset + width > 32
-                u64 |= GC.@preserve(r, unsafe_load(baseptr32 + 4)) << 32
-            end
-            u64 = u64 >> offset & (1 << width - 1)
-            return u64 % ty
-        end
-    end
-end
-
-function Base.setproperty!(x::Ptr{lws_http_mount}, f::Symbol, v)
-    fptr = getproperty(x, f)
-    if fptr isa Ptr
-        unsafe_store!(getproperty(x, f), v)
-    else
-        (baseptr, offset, width) = fptr
-        baseptr32 = convert(Ptr{UInt32}, baseptr)
-        u64 = unsafe_load(baseptr32)
-        straddle = offset + width > 32
-        if straddle
-            u64 |= unsafe_load(baseptr32 + 4) << 32
-        end
-        mask = 1 << width - 1
-        u64 &= ~(mask << offset)
-        u64 |= (unsigned(v) & mask) << offset
-        unsafe_store!(baseptr32, u64 & typemax(UInt32))
-        if straddle
-            unsafe_store!(baseptr32 + 4, u64 >> 32)
-        end
-    end
-end
 
 const lws_conmon_interval_us_t = UInt32
 
