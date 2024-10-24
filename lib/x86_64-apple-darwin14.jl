@@ -7540,8 +7540,6 @@ const LWS_FOP_OPEN = open
 
 const LWS_FOP_CLOSE = close
 
-const LWS_FOP_SEEK_CUR = seek_cur
-
 const LWS_FOP_READ = read
 
 const LWS_FOP_WRITE = write

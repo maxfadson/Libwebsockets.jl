@@ -32,3 +32,16 @@ const LWS_POLLOUT = 0x0004
 const LWS_POLLERR = 0x0008
 
 const LWS_POLLHUP_ERR = LWS_POLLHUP | LWS_POLLERR
+
+
+if Sys.ARCH == :x86_64
+    const _LWS_PAD_SIZE = 16
+else
+    const _LWS_PAD_SIZE = Sys.WORD_SIZE ÷ 8 
+end
+
+function _LWS_PAD(n::Int)
+    return (n % _LWS_PAD_SIZE) != 0 ? (n + (_LWS_PAD_SIZE - (n % _LWS_PAD_SIZE))) : n
+end
+
+const LWS_PRE = _LWS_PAD(4 + 10 + 2)

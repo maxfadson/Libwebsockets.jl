@@ -10,6 +10,11 @@ output_ignorelist = [
     "LWS_O_CREAT",
     "LWS_O_TRUNC",
     "_LWS_PAD_SIZE",
+    "LWS_FOP_SEEK_CUR",
+    "LWS_POLLHUP",
+    "LWS_POLLIN",
+    "LWS_POLLOUT",
+    "LWS_PRE"
     ]
 export_symbol_prefixes = ["lws_", "LWS"]
 prologue_file_path = "./prologue.jl"

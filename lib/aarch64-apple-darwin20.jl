@@ -50,7 +50,6 @@ end
 
 const LWS_PRE = _LWS_PAD(4 + 10 + 2)
 
-
 const __darwin_socklen_t = UInt32
 
 const __darwin_time_t = Clong
@@ -2358,6 +2357,10 @@ const lws_authentication_mode = UInt32
 const LWSAUTHM_DEFAULT = 0 % UInt32
 const LWSAUTHM_BASIC_AUTH_CALLBACK = 268435456 % UInt32
 
+struct lws_http_mount
+    data::NTuple{88, UInt8}
+end
+
 function Base.getproperty(x::Ptr{lws_http_mount}, f::Symbol)
     f === :mount_next && return Ptr{Ptr{lws_http_mount}}(x + 0)
     f === :mountpoint && return Ptr{Ptr{Cchar}}(x + 8)
@@ -2776,6 +2779,7 @@ const WSI_TOKEN_SKIPPING = 99 % UInt32
 const WSI_TOKEN_SKIPPING_SAW_CR = 100 % UInt32
 const WSI_PARSING_COMPLETE = 101 % UInt32
 const WSI_INIT_TOKEN_MUXURL = 102 % UInt32
+
 
 const lws_h2_settings = UInt32
 const H2SET_HEADER_TABLE_SIZE = 1 % UInt32
@@ -4770,8 +4774,8 @@ function lws_threadpool_task_status_wsi(wsi, task, user)
     @ccall libwebsockets.lws_threadpool_task_status_wsi(wsi::Ptr{lws}, task::Ptr{Ptr{lws_threadpool_task}}, user::Ptr{Ptr{Cvoid}})::lws_threadpool_task_status
 end
 
-function lws_threadpool_task_status(task, user)
-    @ccall libwebsockets.lws_threadpool_task_status_fn(task::Ptr{lws_threadpool_task}, user::Ptr{Ptr{Cvoid}})::lws_threadpool_task_status
+function lws_threadpool_task_status_fn(task, user)
+    @ccall libwebsockets.lws_threadpool_task_status(task::Ptr{lws_threadpool_task}, user::Ptr{Ptr{Cvoid}})::lws_threadpool_task_status
 end
 
 function lws_threadpool_task_status_noreap(task)
@@ -7544,8 +7548,6 @@ const LWSTXCR_PEER_TO_US = 1
 const LWS_FOP_OPEN = open
 
 const LWS_FOP_CLOSE = close
-
-# const LWS_FOP_SEEK_CUR = seek_cur
 
 const LWS_FOP_READ = read
 
