@@ -39,7 +39,8 @@ for target in platforms
     headers = [config_h, websockets_h]
 
     ctx = create_context(headers, args, options)
+    build!(ctx, BUILDSTAGE_NO_PRINTING)
     rewrite!(ctx.dag)
-    build!(ctx)
+    build!(ctx, BUILDSTAGE_PRINTING_ONLY)
 end
 

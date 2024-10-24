@@ -25,11 +25,18 @@ const void = Nothing
 
 const FILE = Ptr{Cvoid}
 
-function OSSL_provider_init(handle::Ptr{Cvoid}, in::Ptr{Cvoid}, out::Ptr{Ptr{Cvoid}}, provctx::Ptr{Ptr{Cvoid}})
-    ccall((:OSSL_provider_init, "libssl"), Cint,
-          (Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Ptr{Cvoid}}, Ptr{Ptr{Cvoid}}),
-          handle, in, out, provctx)
+struct pollfd
+    fd::Cint
+    events::Cshort
+    revents::Cshort
 end
+
+const LWS_POLLHUP = 0x0010
+const LWS_POLLIN = 0x0001
+const LWS_POLLOUT = 0x0004
+const LWS_POLLERR = 0x0008
+
+const LWS_POLLHUP_ERR = LWS_POLLHUP | LWS_POLLERR
 
 const __darwin_socklen_t = UInt32
 
@@ -7516,8 +7523,6 @@ const LWS_H2_STREAM_SID = -1
 const lws_plat_service_tsi = lws_service_tsi
 
 # Skipping MacroDefinition: LWS_SIZEOFPTR ( ( int ) sizeof ( void * ) )
-
-const _LWS_PAD_SIZE = 16
 
 const LWS_PRE = _LWS_PAD(4 + 10 + 2)
 

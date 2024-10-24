@@ -693,7 +693,7 @@ function lws_dll2_is_detached(d)
     @ccall libwebsockets.lws_dll2_is_detached(d::Ptr{lws_dll2})::Cint
 end
 
-function lws_dll2_owner(d)
+function lws_dll2_owner_fn(d)
     @ccall libwebsockets.lws_dll2_owner(d::Ptr{lws_dll2})::Ptr{lws_dll2_owner}
 end
 
@@ -820,7 +820,7 @@ function lws_xos_init(xos, seed)
     @ccall libwebsockets.lws_xos_init(xos::Ptr{lws_xos}, seed::UInt64)::Cvoid
 end
 
-function lws_xos(xos)
+function lws_xos_fn(xos)
     @ccall libwebsockets.lws_xos(xos::Ptr{lws_xos})::UInt64
 end
 
@@ -4771,7 +4771,7 @@ function lws_threadpool_task_status_wsi(wsi, task, user)
 end
 
 function lws_threadpool_task_status(task, user)
-    @ccall libwebsockets.lws_threadpool_task_status(task::Ptr{lws_threadpool_task}, user::Ptr{Ptr{Cvoid}})::lws_threadpool_task_status
+    @ccall libwebsockets.lws_threadpool_task_status_fn(task::Ptr{lws_threadpool_task}, user::Ptr{Ptr{Cvoid}})::lws_threadpool_task_status
 end
 
 function lws_threadpool_task_status_noreap(task)
@@ -4831,7 +4831,7 @@ function lws_tokenize_init(ts, start, flags)
     @ccall libwebsockets.lws_tokenize_init(ts::Ptr{lws_tokenize}, start::Ptr{Cchar}, flags::Cint)::Cvoid
 end
 
-function lws_tokenize(ts)
+function lws_tokenize_fn(ts)
     @ccall libwebsockets.lws_tokenize(ts::Ptr{lws_tokenize})::lws_tokenize_elem
 end
 
